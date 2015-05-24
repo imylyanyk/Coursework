@@ -77,8 +77,8 @@ public class FeedForward {
         for (int i = 1; i < L; i++) {
             DoubleMatrix theta = delta.get(i).mmul(a.get(i-1).transpose());
 
-            network.Layers.get(i).Theta = network.Layers.get(i).Theta.add( theta.mul(-LEARNING_RATE) );
-            //new_network.Layers.get(i).Theta = new_network.Layers.get(i).Theta.add(theta);
+            //network.Layers.get(i).Theta = network.Layers.get(i).Theta.add( theta.mul(-LEARNING_RATE) );
+            new_network.Layers.get(i).Theta = new_network.Layers.get(i).Theta.add(theta.mul(-LEARNING_RATE));
         }
 
         return y;

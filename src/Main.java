@@ -7,14 +7,24 @@ import java.util.Random;
 
 public class Main {
 
-    public static void main(String[] args) throws IOException {
+    public static final boolean DEBUG_MODE = false;
+
+    public static void main(String[] args) throws IOException, InterruptedException {
         System.out.println("Demo :: Start");
         //FeedForward.Demo();
         //TeachDemo();
-        AlmostReality();
+        //AlmostReality();
         //PlainDemo();
         //PartTest();
+
+        Multithread();
+
         System.out.println("End of Demo");
+    }
+
+    private static void Multithread() throws IOException, InterruptedException {
+        MultithreadExample example = new MultithreadExample();
+        example.Run();
     }
 
     private static void PlainDemo() {
@@ -67,14 +77,18 @@ public class Main {
     }
 
     public static void AlmostReality() throws IOException {
+
+        long startTime = System.currentTimeMillis();
+
         List<Integer> sizes = new ArrayList<Integer>();
         sizes.add(784);
-        sizes.add(25);
+        sizes.add(40);
         sizes.add(10);
         NeuralNetwork network = new NeuralNetwork(sizes, true);
+        NeuralNetwork new_network = network;
 
         DigitImageLoadingService service = new DigitImageLoadingService("Training-Labels", "Training-Images", true);
-        List<DigitImage> images = service.loadDigitImages(100);
+        List<DigitImage> images = service.loadDigitImages();
 
         System.out.println("Loaded images!");
 
@@ -84,11 +98,14 @@ public class Main {
             for (int i = 0; i < image.getData().length; i++) {
                 data[i+1] = image.getData()[i];
             }
-            FeedForward.TeachNetwork(network, network, new DoubleMatrix(data), DoubleMatrix.zeros(10).put(image.getLabel(), 1));
+            FeedForward.TeachNetwork(network, new_network, new DoubleMatrix(data), DoubleMatrix.zeros(10).put(image.getLabel(), 1));
         }
 
         Random random = new Random();
-        for (int i = 0; i < 10; i++) {
+        int correct = 0;
+
+        int TRAINING_SIZE = 100;
+        for (int i = 0; i < TRAINING_SIZE; i++) {
             DigitImage image = images.get(random.nextInt(images.size()));
 
             double[] data = new double[image.getData().length + 1];
@@ -98,17 +115,29 @@ public class Main {
             }
 
 
-            DoubleMatrix result = FeedForward.Process(network, new DoubleMatrix(data));
-            System.out.println();
-            result.print();
+            DoubleMatrix result = FeedForward.Process(new_network, new DoubleMatrix(data));
+
             int best = 0;
             for (int j = 0; j < result.rows; j++) {
                 if(result.get(best) < result.get(j))
                     best = j;
             }
-            image.print();
-            System.out.println("Original label: " + image.getLabel() + ". Calculated: " + best);
+
+            if(DEBUG_MODE) {
+                System.out.println();
+                result.print();
+                image.print();
+                System.out.println("Original label: " + image.getLabel() + ". Calculated: " + best);
+            }
+            if(best == image.getLabel())
+                correct++;
         }
+
+
+        System.out.println("Correct: " + correct + " out of " + TRAINING_SIZE);
+
+        long estimatedTime = System.currentTimeMillis() - startTime;
+        System.out.println("Time elapsed: " + estimatedTime + " ms.");
     }
 
     private static void Demo() {
